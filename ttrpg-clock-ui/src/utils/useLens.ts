@@ -1,7 +1,7 @@
 import produce, { Draft } from "immer";
 import React, { useCallback, useMemo } from "react";
 
-export type Setter<T> = React.Dispatch<React.SetStateAction<Readonly<T>>>;
+export type Setter<T> = React.Dispatch<React.SetStateAction<T>>;
 export type Stateful<T> = [T, Setter<T>];
 export type Lens<T, U> = {
 	get: (v: T) => U;
@@ -9,6 +9,14 @@ export type Lens<T, U> = {
 };
 export function createLens<T, U>(getValue: (v: T) => U, mergeValue: (prev: Draft<T>, next: U) => void): Lens<T, U> {
 	return { get: getValue, set: mergeValue };
+}
+export function createLensByKey<T>() {
+	return <K extends keyof T>(key: K): Lens<T, T[K]> => {
+		return createLens<T, T[K]>(
+			v => v[key],
+			(prev, next) => ((prev as T)[key] = next)
+		);
+	};
 }
 export function useLens<T, U>(
 	[inValue, setInValue]: Stateful<T>,

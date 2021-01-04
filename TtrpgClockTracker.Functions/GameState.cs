@@ -8,12 +8,11 @@ namespace TtrpgClockTracker.Functions
 {
     public record BlobData(string OwnerId, GameState GameState)
     {
-        public BlobData(string ownerId) : this(ownerId, new GameState()) { }
     }
 
     public record GameState(ImmutableDictionary<string, GameClock> Clocks) 
     {
-        public GameState() : this(ImmutableDictionary<string, GameClock>.Empty) { }
+        public static GameState Empty = new GameState(ImmutableDictionary<string, GameClock>.Empty);
     }
 
     public record GameClock(int CurrentTicks, int TotalTicks) { }

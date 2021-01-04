@@ -16,6 +16,11 @@ namespace TtrpgClockTracker.Functions
 {
     public static class ClockTrackerFunction
     {
+        private static readonly System.Text.Json.JsonSerializerOptions jsonOptions = new System.Text.Json.JsonSerializerOptions
+        {
+            PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase,
+        };
+
         private static readonly TimeSpan TimeLimit = TimeSpan.FromDays(30);
         private const string SignalRHubName = "clocks";
         private const string BlobStorageContainerName = "clocks";
@@ -54,54 +59,31 @@ namespace TtrpgClockTracker.Functions
 
         }
 
-        [FunctionName("createGameClocks")]
-        public static async Task<IActionResult> CreateGameClocks(
-            [HttpTrigger(AuthorizationLevel.Anonymous, "post")] HttpRequest req,
-            [SignalR(HubName = SignalRHubName)] IAsyncCollector<SignalRGroupAction> signalRGroupActions,
-            [SignalR(HubName = SignalRHubName)] IAsyncCollector<SignalRMessage> signalRMessages,
-            [Blob(BlobStorageContainerName, FileAccess.Read)] CloudBlobContainer blobContainer)
-        {
-            var gamerId = req.Headers["x-gamer-id"].Single();
-            
-            var gameId = Guid.NewGuid().ToString();
-
-            // save new game
-            await blobContainer.CreateIfNotExistsAsync();
-            var blob = blobContainer.GetBlockBlobReference(BlobStorageBlobName.Replace("{headers.x-game-id}", gameId));
-            blob.Properties.ContentType = "application/json";
-
-            using var write = await blob.OpenWriteAsync();
-            var blobData = new BlobData(gamerId);
-            await System.Text.Json.JsonSerializer.SerializeAsync(write, blobData);
-
-            // add user to the group
-            await signalRGroupActions.AddAsync(
-                new SignalRGroupAction
-                {
-                    UserId = gamerId,
-                    GroupName = gameId,
-                    Action = GroupAction.Add
-                });
-
-            await signalRMessages.AddAsync(CreatePublicStateMessage(gameId, blobData.GameState, null));
-
-            // tell the user the new game id
-            return new OkObjectResult(System.Text.Json.JsonSerializer.Serialize(gameId));
-        }
-
-
         [FunctionName("getGameState")]
         public static async Task<IActionResult> GetGame(
             [HttpTrigger(AuthorizationLevel.Anonymous, "get")] HttpRequest req,
             [SignalR(HubName = SignalRHubName)] IAsyncCollector<SignalRGroupAction> signalRGroupActions,
             [SignalR(HubName = SignalRHubName)] IAsyncCollector<SignalRMessage> signalRMessages,
-            [Blob(BlobStorageBlobFullName, FileAccess.Read)] string gameState)
+            [Blob(BlobStorageBlobFullName, FileAccess.Read)] string gameState,
+            [Blob(BlobStorageContainerName, FileAccess.Read)] CloudBlobContainer blobContainer)
         {
             var gamerId = req.Headers["x-gamer-id"].Single();
             var gameId = req.Headers["x-game-id"].Single();
 
             // get game
-            var blobData = System.Text.Json.JsonSerializer.Deserialize<BlobData>(gameState);
+            var blobData = gameState != null
+                ? System.Text.Json.JsonSerializer.Deserialize<BlobData>(gameState)
+                : null;
+            blobData ??= new BlobData(gamerId, GameState.Empty);
+            if (gameState == null)
+            {
+                await blobContainer.CreateIfNotExistsAsync();
+                var blob = blobContainer.GetBlockBlobReference(BlobStorageBlobName.Replace("{headers.x-game-id}", gameId));
+                blob.Properties.ContentType = "application/json";
+
+                using var write = await blob.OpenWriteAsync();
+                await System.Text.Json.JsonSerializer.SerializeAsync(write, blobData);
+            }
 
             // add user to the group
             await signalRGroupActions.AddAsync(
@@ -162,22 +144,22 @@ namespace TtrpgClockTracker.Functions
             // get game
             using var blobReader = await blob.OpenReadAsync();
             var blobData = await System.Text.Json.JsonSerializer.DeserializeAsync<BlobData>(blobReader);
-            if (blobData.OwnerId != gamerId)
+            if (blobData?.OwnerId != gamerId)
                 return new ForbidResult();
 
             var actionJson = await req.ReadAsStringAsync();
-            var action = System.Text.Json.JsonSerializer.Deserialize<TAction>(actionJson);
+            var action = System.Text.Json.JsonSerializer.Deserialize<TAction>(actionJson, jsonOptions);
+            if (action == null)
+                return new BadRequestResult();
 
             var (next, valid) = GameLogic.PerformAction(blobData.GameState, action);
-            if (valid)
-            {
-                await signalRMessages.AddAsync(CreatePublicStateMessage(gameId, next, action));
+            if (!valid)
+                return new BadRequestResult();
+            await signalRMessages.AddAsync(CreatePublicStateMessage(gameId, next, action));
 
-                using var write = await blob.OpenWriteAsync();
-                await System.Text.Json.JsonSerializer.SerializeAsync(write, blobData with { GameState = next });
-            }
-
-            return new OkObjectResult(valid);
+            using var write = await blob.OpenWriteAsync();
+            await System.Text.Json.JsonSerializer.SerializeAsync(write, blobData with { GameState = next });
+            return new OkResult();
         }
 
         private static SignalRMessage CreatePublicStateMessage(string gameId, GameState state, GameAction? action = null, Action<SignalRMessage>? initializer = null)
@@ -186,7 +168,11 @@ namespace TtrpgClockTracker.Functions
             var result = new SignalRMessage
             {
                 Target = "NewPublicState",
-                Arguments = new[] { gameId, System.Text.Json.JsonSerializer.Serialize(state) }
+                Arguments = new[]
+                {
+                    gameId,
+                    System.Text.Json.JsonSerializer.Serialize(state, jsonOptions)
+                }
             };
             initializer(result);
             return result;
