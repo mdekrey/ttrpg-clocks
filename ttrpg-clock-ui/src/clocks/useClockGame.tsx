@@ -1,5 +1,5 @@
 import { createContext, ReactNode, useContext, useMemo } from "react";
-import { Observable, Subscription } from "rxjs";
+import { Observable, combineLatest } from "rxjs";
 import { filter, map, shareReplay, switchAll } from "rxjs/operators";
 import { useRx } from "../utils/useRx";
 import { useSignalRConnection } from "../utils/useSignalRConnection";
@@ -11,35 +11,43 @@ function useClockGameInternal(gamerId: string, gameId: string) {
 		const headers = { "x-game-id": gameId, "Content-Type": "application/json" };
 		return {
 			gameState: connection.pipe(
-				map(
-					hub =>
+				map(hub =>
+					combineLatest([
+						ajax({
+							url: "getGameState",
+							method: "GET",
+							headers,
+						}).pipe(map(response => response.response)),
+
 						new Observable<[string, ClockGameState]>(observer => {
 							const next = (gameId: string, v: string) => observer.next([gameId, JSON.parse(v)]);
 							hub.on("NewPublicState", next);
-							const subscription = new Subscription();
-							subscription.add(
-								ajax({
-									url: "getGameState",
-									method: "GET",
-									headers,
-								}).subscribe()
-							);
-							subscription.add(() => hub.off("NewPublicState", next));
-							return subscription;
-						})
+							return () => hub.off("NewPublicState", next);
+						}).pipe(
+							filter(([incomingGameId, gameState]) => gameId === incomingGameId),
+							map(([_, gameState]) => gameState)
+						),
+					]).pipe(map(([isOwner, gameState]) => ({ ...gameState, isOwner })))
 				),
 				switchAll(),
-				filter(([incomingGameId, gameState]) => gameId === incomingGameId),
-				map(([_, gameState]) => gameState),
 				shareReplay(1)
 			),
 			addClock: (clockName: string, totalTicks: number) =>
-				ajax({ url: "addClock", headers, method: "POST", body: { clockName, totalTicks } }),
-			removeClock: (clockName: string) => ajax({ url: "addClock", headers, method: "POST", body: { clockName } }),
+				ajax({ url: "addClock", headers, method: "POST", body: { clockName, totalTicks } })
+					.pipe(map(() => {}))
+					.toPromise(),
+			removeClock: (clockName: string) =>
+				ajax({ url: "removeClock", headers, method: "POST", body: { clockName } })
+					.pipe(map(() => {}))
+					.toPromise(),
 			tickClock: (clockName: string, tickCount: number) =>
-				ajax({ url: "addClock", headers, method: "POST", body: { clockName, tickCount } }),
-			renameClock: (oldClockName: string, newClockName: number) =>
-				ajax({ url: "addClock", headers, method: "POST", body: { oldClockName, newClockName } }),
+				ajax({ url: "tickClock", headers, method: "POST", body: { clockName, tickCount } })
+					.pipe(map(() => {}))
+					.toPromise(),
+			renameClock: (oldClockName: string, newClockName: string) =>
+				ajax({ url: "renameClock", headers, method: "POST", body: { oldClockName, newClockName } })
+					.pipe(map(() => {}))
+					.toPromise(),
 		};
 	}, [connection, ajax]);
 }
@@ -61,14 +69,20 @@ export const ClockGameProvider = ({
 		gamerId,
 		gameId
 	);
-	const gameState = useRx(gameState$, { clocks: {} });
-	const clockGame = useMemo(() => ({ addClock, removeClock, tickClock, renameClock, gameState }), [
-		addClock,
-		removeClock,
-		tickClock,
-		renameClock,
-		gameState,
-	]);
+	const gameState = useRx(gameState$, { isOwner: false, clocks: {} });
+	const clockGame = useMemo(
+		(): ClockGame =>
+			gameState.isOwner
+				? { addClock, removeClock, tickClock, renameClock, gameState }
+				: {
+						addClock: () => Promise.resolve(),
+						removeClock: () => Promise.resolve(),
+						tickClock: () => Promise.resolve(),
+						renameClock: () => Promise.resolve(),
+						gameState,
+				  },
+		[addClock, removeClock, tickClock, renameClock, gameState]
+	);
 	return (
 		<ClockGameContext.Provider value={clockGame}>
 			{typeof children === "function" ? children(clockGame) : children || null}

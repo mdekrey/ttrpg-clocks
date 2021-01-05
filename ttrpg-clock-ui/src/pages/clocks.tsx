@@ -11,10 +11,10 @@ export default () => {
 	const gameId = useMemo(() => location["game"] || uuid(), [location]);
 	return (
 		<ClockGameProvider gamerId={gamerId} gameId={gameId}>
-			{({ gameState: { clocks }, addClock, removeClock, tickClock, renameClock }) => (
+			{({ gameState: { isOwner, clocks }, addClock, ...actions }) => (
 				<div>
-					<Clocks clocks={clocks} removeClock={removeClock} tickClock={tickClock} renameClock={renameClock} />
-					<AddClockButton addClock={addClock} />
+					<Clocks clocks={clocks} {...(isOwner ? actions : {})} />
+					{isOwner ? <AddClockButton addClock={addClock} /> : null}
 				</div>
 			)}
 		</ClockGameProvider>

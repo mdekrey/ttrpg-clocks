@@ -1,19 +1,19 @@
 import React, { useEffect, useState } from "react";
 import { ValueInput } from "./ValueInput";
 
-export function NumericInput({
-	value,
-	setValue,
-	...props
-}: {
-	value: number;
-	setValue: (value: number) => void;
-} & Omit<JSX.IntrinsicElements["input"], "value">) {
+export const NumericInput = React.forwardRef<
+	HTMLInputElement,
+	{
+		value: number;
+		setValue: (value: number) => void;
+	} & Omit<JSX.IntrinsicElements["input"], "value">
+>(({ value, setValue, ...props }, ref) => {
 	const [innerValue, setInnerValue] = useState(`${value}`);
 	useEffect(() => setInnerValue(`${value}`), [value, setInnerValue]);
 
 	return (
 		<ValueInput
+			ref={ref as any}
 			value={innerValue}
 			setValue={maybeSetValue}
 			onBlur={() => updateValue(innerValue)}
@@ -32,4 +32,4 @@ export function NumericInput({
 	function updateValue(innerValue: string) {
 		setValue(Number(innerValue));
 	}
-}
+});

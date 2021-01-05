@@ -5,6 +5,7 @@ import { FormSection } from "./components/FormSection";
 import { ValueInput } from "./components/ValueInput";
 import { NumericInput } from "./components/NumericInput";
 import { ClockGame } from "./useClockGame";
+import { focusInput } from "../utils/focusInput";
 
 type AddClock = {
 	clockName: string;
@@ -24,7 +25,7 @@ export const AddClockButton = ({ addClock }: Pick<ClockGame, "addClock">) => {
 				show={showAddClock}
 				onRequestHide={() => setShowAddClock(false)}
 				setValueAndHide={value => {
-					addClock(value.clockName, value.totalTicks).subscribe();
+					addClock(value.clockName, value.totalTicks);
 					setShowAddClock(false);
 				}}
 				value={addClockParams}
@@ -44,7 +45,7 @@ function AddClockForm({ formData }: { formData: Stateful<AddClock> }) {
 		<div className="flex flex-col">
 			<FormSection
 				label="Clock Name"
-				fields={id => <ValueInput id={id} value={clockName} setValue={setClockName} />}
+				fields={id => <ValueInput ref={focusInput} id={id} value={clockName} setValue={setClockName} />}
 			/>
 			<FormSection
 				label="Total Ticks"

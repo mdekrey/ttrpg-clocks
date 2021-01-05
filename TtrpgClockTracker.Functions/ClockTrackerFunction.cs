@@ -67,16 +67,22 @@ namespace TtrpgClockTracker.Functions
             [Blob(BlobStorageBlobFullName, FileAccess.Read)] string gameState,
             [Blob(BlobStorageContainerName, FileAccess.Read)] CloudBlobContainer blobContainer)
         {
-            var gamerId = req.Headers["x-gamer-id"].Single();
+            var gamerId = req.Headers.TryGetValue("x-gamer-id", out var values) ? values.SingleOrDefault() : null;
             var gameId = req.Headers["x-game-id"].Single();
 
             // get game
             var blobData = gameState != null
                 ? System.Text.Json.JsonSerializer.Deserialize<BlobData>(gameState)
                 : null;
-            blobData ??= new BlobData(gamerId, GameState.Empty);
+            if (blobData == null)
+            {
+                if (gamerId == null)
+                    return new NotFoundResult();
+                blobData ??= new BlobData(gamerId, GameState.Empty);
+            }
             if (gameState == null)
             {
+
                 await blobContainer.CreateIfNotExistsAsync();
                 var blob = blobContainer.GetBlockBlobReference(BlobStorageBlobName.Replace("{headers.x-game-id}", gameId));
                 blob.Properties.ContentType = "application/json";
@@ -96,7 +102,7 @@ namespace TtrpgClockTracker.Functions
 
             await signalRMessages.AddAsync(CreatePublicStateMessage(gameId, blobData.GameState, null, message => message.UserId = gamerId));
 
-            return new OkResult();
+            return new OkObjectResult(gamerId == blobData.OwnerId);
         }
 
         [FunctionName("addClock")]
