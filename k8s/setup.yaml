@@ -1,0 +1,98 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ttrpg-clocks-deployment
+  labels:
+    app: ttrpg-clocks-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ttrpg-clocks-pod
+  template:
+    metadata:
+      labels:
+        app: ttrpg-clocks-pod
+    spec:
+      imagePullSecrets:
+        - name: ttrpg-clocks-registry
+      dnsPolicy: ClusterFirstWithHostNet
+      containers:
+        - name: web
+          image: "dekreydotnet.azurecr.io/ttrpgclocks:latest"
+          imagePullPolicy: Always
+          ports:
+            - name: http
+              containerPort: 80
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: ttrpg-clocks-ingress
+  labels:
+    app: ttrpg-clocks-ingress
+spec:
+  tls:
+    - hosts:
+      - clocks.dekrey.net
+      secretName: clocks-dekrey-net-tls
+  rules:
+    - host: clocks.dekrey.net
+      http:
+        paths:
+          - path: /
+            backend:
+              serviceName: ttrpg-clocks-svc
+              servicePort: 80
+---
+apiVersion: cert-manager.io/v1alpha2
+kind: Issuer
+metadata:
+  name: letsencrypt
+spec:
+  acme:
+    server: https://acme-v02.api.letsencrypt.org/directory
+    email: matt.dekrey@gmail.com
+    privateKeySecretRef:
+      name: letsencrypt
+    solvers:
+    - http01:
+        ingress:
+          class: nginx
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ttrpg-clocks-svc
+  labels:
+    app: ttrpg-clocks-svc
+spec:
+  type: ClusterIP
+  ports:
+    - port: 80
+      targetPort: 80
+      protocol: TCP
+      name: http
+  selector:
+    app: ttrpg-clocks-pod
+---
+apiVersion: cert-manager.io/v1alpha2
+kind: Certificate
+metadata:
+  name: clocks-dekrey-net-tls
+spec:
+  secretName: clocks-dekrey-net-tls
+  commonName: clocks.dekrey.net
+  dnsNames:
+  - clocks.dekrey.net
+  issuerRef:
+    name: letsencrypt
