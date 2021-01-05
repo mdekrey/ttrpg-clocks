@@ -17,7 +17,7 @@ declare global {
 }
 
 function getBaseUrl() {
-	return (window || global).apiBaseUrl || "/api";
+	return "/api";
 }
 
 function getConnection(ajaxHelper: (urlOrRequest: AjaxRequest) => Observable<AjaxResponse>) {
