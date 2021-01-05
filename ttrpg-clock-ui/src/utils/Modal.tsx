@@ -183,8 +183,8 @@ export const ModalFooter = ({ children }: { children?: React.ReactNode }) => (
 
 export const buttonStyles = {
 	normal: "bg-black text-gray-200 hover:text-white hover:bg-blue-900 focus:bg-blue-800 focus:shadow-outline-blue",
-	green: "bg-green-600 text-white hover:bg-green-500 focus:bg-green-700",
-	red: "bg-red-600 text-white hover:bg-red-500 focus:bg-red-700",
+	green: "bg-green-600 text-white hover:bg-green-900 focus:bg-green-900 focus:border-white hover:border-white",
+	red: "bg-red-600 text-white hover:bg-red-900 focus:bg-red-900 focus:border-white hover:border-white",
 };
 
 export const ModalButton = ({
