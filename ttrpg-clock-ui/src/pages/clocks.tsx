@@ -14,7 +14,32 @@ export default () => {
 			{({ gameState: { isOwner, clocks }, addClock, ...actions }) => (
 				<div>
 					<Clocks clocks={clocks} {...(isOwner ? actions : {})} />
-					{isOwner ? <AddClockButton addClock={addClock} /> : null}
+					{isOwner ? (
+						<>
+							<AddClockButton addClock={addClock} />
+							<p>
+								Bookmark this page to ensure you can return to your clocks!
+								<input
+									type="text"
+									readOnly
+									value={`${window.location.href.split("?")[0]}?game=${gameId}&user=${gamerId}`}
+									className="m-2 border border-black bg-gray-300"
+									onFocus={ev => ev.target.setSelectionRange(0, ev.target.value.length)}
+								/>
+								(Visit within 30 days.)
+							</p>
+							<p>
+								Share this link with your players:{" "}
+								<input
+									type="text"
+									readOnly
+									value={`${window.location.href.split("?")[0]}?game=${gameId}`}
+									className="m-2 border border-black bg-gray-300"
+									onFocus={ev => ev.target.setSelectionRange(0, ev.target.value.length)}
+								/>
+							</p>
+						</>
+					) : null}
 				</div>
 			)}
 		</ClockGameProvider>

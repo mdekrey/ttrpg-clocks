@@ -7,6 +7,7 @@ export const Clocks = ({
 	...clockFunctions
 }: { clocks: ClockGameState["clocks"] } & Partial<Pick<ClockGame, "removeClock" | "tickClock" | "renameClock">>) => {
 	const keys = Object.keys(clocks).sort();
+	if (keys.length === 0) return <p>No clocks have been added at this time.</p>;
 	return (
 		<div className="flex flex-col sm:flex-row flex-wrap mt-2">
 			{keys.map(key => (
