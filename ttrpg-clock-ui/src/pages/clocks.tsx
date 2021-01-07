@@ -7,6 +7,7 @@ import { useLocationParams } from "../utils/useLocationParams";
 import Info from "../clocks/info.svg";
 import { Modal, ModalButton, ModalContent, ModalFooter } from "../utils/Modal";
 import styles from "./clocks.module.css";
+import { isSSR } from "../utils/isSSR";
 
 export default () => {
 	const location = useLocationParams();
@@ -30,34 +31,36 @@ export default () => {
 						</div>
 					) : null}
 
-					<Modal onRequestHide={() => setShowInfo(false)} show={showInfo}>
-						<ModalContent>
-							<p>
-								Bookmark this page to ensure you can return to your clocks!
-								<input
-									type="text"
-									readOnly
-									value={`${window.location.href.split("?")[0]}?game=${gameId}&user=${gamerId}`}
-									className="m-2 border border-white bg-gray-700 text-white"
-									onFocus={ev => ev.target.setSelectionRange(0, ev.target.value.length)}
-								/>
-								(Visit within 30 days.)
-							</p>
-							<p>
-								Share this link with your players:{" "}
-								<input
-									type="text"
-									readOnly
-									value={`${window.location.href.split("?")[0]}?game=${gameId}`}
-									className="m-2 border border-white bg-gray-700 text-white"
-									onFocus={ev => ev.target.setSelectionRange(0, ev.target.value.length)}
-								/>
-							</p>
-						</ModalContent>
-						<ModalFooter>
-							<ModalButton onClick={() => setShowInfo(false)}>OK</ModalButton>
-						</ModalFooter>
-					</Modal>
+					{isSSR() ? null : (
+						<Modal onRequestHide={() => setShowInfo(false)} show={showInfo}>
+							<ModalContent>
+								<p>
+									Bookmark this page to ensure you can return to your clocks!
+									<input
+										type="text"
+										readOnly
+										value={`${window.location.href.split("?")[0]}?game=${gameId}&user=${gamerId}`}
+										className="m-2 border border-white bg-gray-700 text-white"
+										onFocus={ev => ev.target.setSelectionRange(0, ev.target.value.length)}
+									/>
+									(Visit within 30 days.)
+								</p>
+								<p>
+									Share this link with your players:{" "}
+									<input
+										type="text"
+										readOnly
+										value={`${window.location.href.split("?")[0]}?game=${gameId}`}
+										className="m-2 border border-white bg-gray-700 text-white"
+										onFocus={ev => ev.target.setSelectionRange(0, ev.target.value.length)}
+									/>
+								</p>
+							</ModalContent>
+							<ModalFooter>
+								<ModalButton onClick={() => setShowInfo(false)}>OK</ModalButton>
+							</ModalFooter>
+						</Modal>
+					)}
 				</div>
 			)}
 		</ClockGameProvider>
