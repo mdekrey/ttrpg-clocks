@@ -5,7 +5,7 @@
 @tailwind utilities;
 
 .button {
-	@apply bg-gray-300 border border-gray-800 rounded p-1 shadow;
+	@apply bg-gray-300 border border-gray-800 rounded p-1 shadow align-middle;
 
 	&:focus {
 		@apply bg-blue-300 border-blue-800;

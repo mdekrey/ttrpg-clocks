@@ -28,16 +28,18 @@ export function Clock({
 	const [showRenameClock, setShowRenameClock] = useState(false);
 
 	return (
-		<div className="border border-gray-700 rounded flex flex-row sm:flex-col p-2 sm:h-64 sm:w-48 text-left sm:text-center mb-2 mx-1 items-center sm:items-stretch shadow-xl">
-			<button className="block text-lg" onClick={() => setShowRenameClock(true)}>
+		<div className="sm:border sm:border-gray-700 rounded flex flex-row sm:flex-col p-2 sm:h-64 sm:w-48 text-left sm:text-center mb-2 mx-1 items-center sm:items-stretch sm:shadow-xl">
+			<button
+				className="block text-lg flex-1 sm:flex-shrink-0 sm:flex-grow-0"
+				onClick={() => setShowRenameClock(true)}
+			>
 				{name}
 			</button>
-			<span className="sr-only">
-				{currentTicks} of {totalTicks}
-			</span>
 			<button className="flex-grow flex items-center justify-center" onClick={() => setShowTickClock(true)}>
 				<svg width={radius * 2 + padding} height={radius * 2 + padding}>
-					<title>Clock visualization</title>
+					<title>
+						{currentTicks} of {totalTicks}
+					</title>
 					<g transform={`translate(${padding / 2 + radius} ${padding / 2 + radius})`}>
 						{clockPie.map(piece => (
 							<path
@@ -45,7 +47,7 @@ export function Clock({
 								d={clockArc(piece)!}
 								fill="currentcolor"
 								stroke="black"
-								strokeWidth={2}
+								strokeWidth={totalTicks <= 8 ? 2 : totalTicks <= 20 ? 1 : 0.5}
 								className={piece.index < currentTicks ? "text-gray-700" : "text-gray-50"}
 							/>
 						))}

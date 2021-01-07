@@ -1,0 +1,13 @@
+.button-row {
+	@apply grid justify-end gap-4 mr-4 mb-4;
+	grid-template-columns: repeat(auto-fit, minmax(0px, auto));
+}
+
+.clocks-container {
+	@apply grid gap-4 h-screen;
+	grid-template-rows: 1fr auto;
+}
+
+.clocks {
+	@apply self-center justify-self-center;
+}
