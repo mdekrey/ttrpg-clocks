@@ -7,7 +7,3 @@
 	@apply grid gap-4 h-screen;
 	grid-template-rows: 1fr auto;
 }
-
-.clocks {
-	@apply self-center justify-self-center;
-}

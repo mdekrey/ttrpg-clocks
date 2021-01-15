@@ -18,7 +18,7 @@ export default () => {
 		<ClockGameProvider gamerId={gamerId} gameId={gameId}>
 			{({ gameState: { isOwner, clocks }, addClock, ...actions }) => (
 				<div className={styles.clocksContainer}>
-					<div className={styles.clocks}>
+					<div className="sm:self-center sm:justify-self-center">
 						<Clocks clocks={clocks} {...(isOwner ? actions : {})} />
 					</div>
 					{isOwner ? (

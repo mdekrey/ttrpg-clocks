@@ -28,14 +28,11 @@ export function Clock({
 	const [showRenameClock, setShowRenameClock] = useState(false);
 
 	return (
-		<div className="sm:border sm:border-gray-700 rounded flex flex-row sm:flex-col p-2 sm:h-64 sm:w-48 text-left sm:text-center mb-2 mx-1 items-center sm:items-stretch sm:shadow-xl">
-			<button
-				className="block text-lg flex-1 sm:flex-shrink-0 sm:flex-grow-0"
-				onClick={() => setShowRenameClock(true)}
-			>
+		<div className="sm:border sm:border-gray-700 rounded flex flex-row sm:flex-col p-2 sm:w-48 text-left sm:text-center mb-2 mx-1 items-stretch sm:shadow-xl">
+			<button className="block text-lg flex-1 sm:flex-shrink-0" onClick={() => setShowRenameClock(true)}>
 				{name}
 			</button>
-			<button className="flex-grow flex items-center justify-center" onClick={() => setShowTickClock(true)}>
+			<button className="flex items-center justify-center" onClick={() => setShowTickClock(true)}>
 				<svg width={radius * 2 + padding} height={radius * 2 + padding}>
 					<title>
 						{currentTicks} of {totalTicks}
