@@ -7,7 +7,7 @@ const collator = new Intl.Collator(undefined, { numeric: true, sensitivity: "bas
 export const Clocks = ({
 	clocks,
 	...clockFunctions
-}: { clocks: ClockGameState["clocks"] } & Partial<Pick<ClockGame, "removeClock" | "tickClock" | "renameClock">>) => {
+}: { clocks: ClockGameState["clocks"] } & Pick<ClockGame, "removeClock" | "tickClock" | "renameClock">) => {
 	const keys = Object.keys(clocks).sort(collator.compare);
 	if (keys.length === 0) return <p>No clocks have been added at this time.</p>;
 	return (

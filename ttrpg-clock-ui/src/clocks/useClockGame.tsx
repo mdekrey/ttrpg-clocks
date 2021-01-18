@@ -52,7 +52,24 @@ function useClockGameInternal(gamerId: string, gameId: string) {
 	}, [connection, ajax]);
 }
 
-export type ClockGame = Omit<ReturnType<typeof useClockGameInternal>, "gameState"> & { gameState: ClockGameState };
+function useClockGameRx(gamerId: string, gameId: string) {
+	const { gameState: gameState$, addClock, removeClock, tickClock, renameClock } = useClockGameInternal(
+		gamerId,
+		gameId
+	);
+	const gameState = useRx(gameState$, { isOwner: false, clocks: {} });
+	return useMemo(
+		() =>
+			gameState.isOwner
+				? { addClock, removeClock, tickClock, renameClock, gameState }
+				: {
+						gameState,
+				  },
+		[addClock, removeClock, tickClock, renameClock, gameState]
+	);
+}
+
+export type ClockGame = ReturnType<typeof useClockGameRx>;
 
 const ClockGameContext = createContext<ClockGame>(null as any);
 
@@ -65,24 +82,7 @@ export const ClockGameProvider = ({
 	gameId: string;
 	children?: ReactNode | ((game: ClockGame) => ReactNode);
 }) => {
-	const { gameState: gameState$, addClock, removeClock, tickClock, renameClock } = useClockGameInternal(
-		gamerId,
-		gameId
-	);
-	const gameState = useRx(gameState$, { isOwner: false, clocks: {} });
-	const clockGame = useMemo(
-		(): ClockGame =>
-			gameState.isOwner
-				? { addClock, removeClock, tickClock, renameClock, gameState }
-				: {
-						addClock: () => Promise.resolve(),
-						removeClock: () => Promise.resolve(),
-						tickClock: () => Promise.resolve(),
-						renameClock: () => Promise.resolve(),
-						gameState,
-				  },
-		[addClock, removeClock, tickClock, renameClock, gameState]
-	);
+	const clockGame = useClockGameRx(gamerId, gameId);
 	return (
 		<ClockGameContext.Provider value={clockGame}>
 			{typeof children === "function" ? children(clockGame) : children || null}

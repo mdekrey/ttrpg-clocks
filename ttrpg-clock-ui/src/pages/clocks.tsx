@@ -21,7 +21,7 @@ export default () => {
 					<div className="sm:self-center sm:justify-self-center">
 						<Clocks clocks={clocks} {...(isOwner ? actions : {})} />
 					</div>
-					{isOwner ? (
+					{addClock ? (
 						<div className={styles.buttonRow}>
 							<AddClockButton addClock={addClock} />
 							<button className="button" onClick={() => setShowInfo(true)}>

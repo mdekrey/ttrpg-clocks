@@ -14,7 +14,7 @@ type AddClock = {
 
 const addClockParams: AddClock = { clockName: "", totalTicks: 6 };
 
-export const AddClockButton = ({ addClock }: Pick<ClockGame, "addClock">) => {
+export const AddClockButton = ({ addClock }: Pick<Required<ClockGame>, "addClock">) => {
 	const [showAddClock, setShowAddClock] = useState(false);
 	return (
 		<>

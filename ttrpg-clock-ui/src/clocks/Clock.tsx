@@ -16,7 +16,7 @@ export function Clock({
 }: {
 	name: string;
 	clock: ClockGameState["clocks"][0];
-} & Partial<Pick<ClockGame, "removeClock" | "tickClock" | "renameClock">>) {
+} & Pick<ClockGame, "removeClock" | "tickClock" | "renameClock">) {
 	const [showTickClock, setShowTickClock] = useState(false);
 	const [showRenameClock, setShowRenameClock] = useState(false);
 
@@ -31,39 +31,45 @@ export function Clock({
 			<button className="flex items-center justify-center" onClick={() => setShowTickClock(true)}>
 				<ClockSvg padding={2} radius={70} {...clock} />
 			</button>
-			<EditorModal
-				show={tickClock ? showTickClock : false}
-				onRequestHide={() => setShowTickClock(false)}
-				setValueAndHide={value => {
-					if (value !== 0) tickClock!(name, value);
-					setShowTickClock(false);
-				}}
-				value={0}
-				buttons={
-					<ModalButton
-						className={buttonStyles.red}
-						onClick={() => {
-							removeClock!(name);
-							setShowRenameClock(false);
-						}}
-					>
-						Delete
-					</ModalButton>
-				}
-			>
-				{modalData => <TickClockForm formData={modalData} {...clock} />}
-			</EditorModal>
-			<EditorModal
-				show={renameClock ? showRenameClock : false}
-				onRequestHide={() => setShowRenameClock(false)}
-				setValueAndHide={value => {
-					if (value !== name) renameClock!(name, value);
-					setShowRenameClock(false);
-				}}
-				value={name}
-			>
-				{modalData => <RenameClockForm formData={modalData} />}
-			</EditorModal>
+			{tickClock ? (
+				<EditorModal
+					show={showTickClock}
+					onRequestHide={() => setShowTickClock(false)}
+					setValueAndHide={value => {
+						if (value !== 0) tickClock(name, value);
+						setShowTickClock(false);
+					}}
+					value={0}
+					buttons={
+						removeClock ? (
+							<ModalButton
+								className={buttonStyles.red}
+								onClick={() => {
+									removeClock(name);
+									setShowRenameClock(false);
+								}}
+							>
+								Delete
+							</ModalButton>
+						) : null
+					}
+				>
+					{modalData => <TickClockForm formData={modalData} {...clock} />}
+				</EditorModal>
+			) : null}
+			{renameClock ? (
+				<EditorModal
+					show={showRenameClock}
+					onRequestHide={() => setShowRenameClock(false)}
+					setValueAndHide={value => {
+						if (value !== name) renameClock(name, value);
+						setShowRenameClock(false);
+					}}
+					value={name}
+				>
+					{modalData => <RenameClockForm formData={modalData} />}
+				</EditorModal>
+			) : null}
 		</div>
 	);
 }
