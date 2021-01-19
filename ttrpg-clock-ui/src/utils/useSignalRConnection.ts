@@ -4,18 +4,6 @@ import { ajax, AjaxRequest, AjaxResponse } from "rxjs/ajax";
 import { map, shareReplay, switchAll } from "rxjs/operators";
 import { Observable } from "rxjs";
 
-declare global {
-	interface Window {
-		apiBaseUrl: string;
-	}
-
-	namespace NodeJS {
-		interface Global {
-			apiBaseUrl: string;
-		}
-	}
-}
-
 function getBaseUrl() {
 	return "/api";
 }
