@@ -34,13 +34,17 @@ spec:
               path: /
               port: http
 ---
-apiVersion: extensions/v1beta1
+apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: ttrpg-clocks-ingress
   labels:
     app: ttrpg-clocks-ingress
+  annotations:
+    acme.cert-manager.io/http01-edit-in-place: "true"
+    cert-manager.io/issuer: letsencrypt
 spec:
+  ingressClassName: nginx
   tls:
     - hosts:
       - clocks.dekrey.net
@@ -50,11 +54,14 @@ spec:
       http:
         paths:
           - path: /
+            pathType: ImplementationSpecific
             backend:
-              serviceName: ttrpg-clocks-svc
-              servicePort: 80
+              service:
+                name: ttrpg-clocks-svc
+                port:
+                  number: 80
 ---
-apiVersion: cert-manager.io/v1alpha2
+apiVersion: cert-manager.io/v1
 kind: Issuer
 metadata:
   name: letsencrypt
@@ -84,15 +91,3 @@ spec:
       name: http
   selector:
     app: ttrpg-clocks-pod
----
-apiVersion: cert-manager.io/v1alpha2
-kind: Certificate
-metadata:
-  name: clocks-dekrey-net-tls
-spec:
-  secretName: clocks-dekrey-net-tls
-  commonName: clocks.dekrey.net
-  dnsNames:
-  - clocks.dekrey.net
-  issuerRef:
-    name: letsencrypt

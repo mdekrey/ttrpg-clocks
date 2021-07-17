@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { arc, DefaultArcObject, pie } from "d3-shape";
+import { arc, pie, PieArcDatum } from "d3-shape";
 
 export function ClockSvg({
 	radius,
@@ -12,11 +12,11 @@ export function ClockSvg({
 	currentTicks: number;
 	totalTicks: number;
 }) {
-	const clockArc = useMemo(
-		() => arc<any, Pick<DefaultArcObject, "startAngle" | "endAngle">>().innerRadius(0).outerRadius(radius),
-		[radius]
-	);
-	const clockPie = useMemo(() => pie()(Array(totalTicks).fill(1)), [totalTicks]);
+	const clockArc = useMemo(() => arc<void, PieArcDatum<unknown>>().innerRadius(0).outerRadius(radius), [radius]);
+	const clockPie = useMemo(() => {
+		const clockPieData = Array(totalTicks).fill(1);
+		return pie<void, number>()(clockPieData);
+	}, [totalTicks]);
 
 	return (
 		<svg width={radius * 2 + padding} height={radius * 2 + padding}>
